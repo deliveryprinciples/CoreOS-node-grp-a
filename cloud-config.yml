@@ -1,0 +1,37 @@
+#cloud-config
+
+coreos:
+  etcd2:
+    # Definition of the initial cluster (the etcd machines running the show... data pulled from https://discovery.etcd.io/c51e848f38dadf9b55112cff844c3ae6)
+    initial-cluster: 5e601403081b4099af7d3e0517666e14=http://10.131.31.204:2380, 2884e3dedc974966a9e3ae50d7b51150=http://10.131.31.112:2380, b733fdea198c486094905d63e875ce7e=http://10.131.31.220:2380
+    # Set up proxy behaviour
+    advertise-client-urls: http://0.0.0.0:2379
+    listen-client-urls: http://0.0.0.0:2379
+    proxy: on
+
+  fleet:
+    public-ip: $private_ipv4   # Needed for fleetctl ssh command
+    metadata: "role=node_grp_a"
+
+  units:
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: sshd.socket
+      command: restart
+      runtime: true
+      content: |
+        [Socket]
+        ListenStream=2222
+        FreeBind=true
+        Accept=yes
+
+  locksmith:
+    group: "nodes"
+
+  update:
+    reboot-strategy: "reboot"
+
+ssh_authorized_keys:
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC8Bmy0Oma7nQJvewLIPotHP0nkv53QIChMT6aSBxZpz9PH+Sj00t/NFp/+qpo5Y5kRLC64LgS1Mx7ZnE9osPPYVNtNw/0zRm3CZWVNYcwHO2B0IMMaf8CKC++aFsf2oFHaVE4+DNQdjiK3sAacB+PdKc4gtx432dvQ0880fjkBIujJGE3AZuInrWazMOFISRIvDzuf4VXcSrosxzm39Ey4HGnvvM9RXUM9Imv5/5HCG0abSRZ10tse2vNktrpdff67/Z+iKWl8Oyzos6zZKdjl+LpulzSo16K6xFzg7W6wJSH+KoGn92Lv3Lb3dRzfrAXuNjheN+s6C2fdyPuqWdsB andrew@MacBook-Pro.local"
